@@ -1,0 +1,10 @@
+extends layout
+
+block content
+  h1 MC-Watch
+  p Instance: #{awsStatus.Name}
+  if awsStatus.Name === "stopped"
+    form(action="/", method="post")
+      input(type="submit" value="Submit")
+  p Minecraft: #{mcStatus ? 'online (' + mcStatus.players.length + '/' + mcStatus.maxplayers + '): ' + mcStatus.players.map((p) => p.name).join(', ') + ( count ? ' and empty for ' + count + ' minutes' : '' ) : 'offline'}
+
