@@ -36,6 +36,36 @@ const minecraftStatus = (cb) => {
   });
 };
 
+const mc = require('minecraft-protocol');
+const mcServer = mc.createServer({
+  'online-mode': false,   // optional
+  encryption: true,      // optional
+  host: '0.0.0.0',       // optional
+  port: 25565,           // optional
+  version: '1.11.2',
+  beforePing: (response, client, cb) => {
+    response.players.max = 0;
+    if(AWS_STATUS !== AWS_STATUS_STOPPED){
+      response.description.text = '§6STARTING§7 - Starting Server!';
+    }else{
+      response.description.text = '§4OFFLINE§7 - Enter to start server!';
+    }
+    cb(null, response);
+  }
+});
+mcServer.on('ping', function(client) {
+  console.log('PING');
+});
+mcServer.on('login', function(client) {
+  client.on('error', (err) => {
+    console.log('MC client error: ');
+    console.log(err);
+  });
+  instanceStart(() => {
+    client.end('Starting Server! Wait a few seconds!');
+  });
+});
+
 /*******************
  *  AWS
  *******************/
@@ -73,6 +103,7 @@ const instanceStop = (cb) => {
 const instanceStart = (cb) => {
   ec2.startInstances({InstanceIds: [config.AWS_INSTANCE_ID]}, function(err, data) {
     if (err) return cb(err); // an error occurred
+    checkInstanceStatus();
     cb(null, data);           // successful response
   });
 };
@@ -114,7 +145,16 @@ const checkInstanceStatus = () => {
             console.log('Updated DNS to IP: ' + ip);
           });
         });
+      }else if(AWS_STATUS !== AWS_STATUS_STOPPED && newStatus === AWS_STATUS_STOPPED){
+        //changed to stopped, must update DNS IP back to mc-watch
+        console.log('Instance is now stopped, must update DNS IP');
+
+        updateZone(config.MC_WATCH_SERVER_IP, (err, resp) => {
+          if(err) return console.log(err);
+          console.log('Updated DNS to MC-WATCH IP');
+        });
       }
+
 
       AWS_STATUS = newStatus;
     }
@@ -150,7 +190,7 @@ const checkMinecraftStatus = () => {
 };
 
 setInterval(checkMinecraftStatus, 10 * 1000);
-setInterval(checkInstanceStatus, 60 * 1000);
+setInterval(checkInstanceStatus, 20 * 1000);
 checkInstanceStatus();
 
 /*******************
