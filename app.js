@@ -61,6 +61,10 @@ mcServer.on('login', function(client) {
     console.log('MC client error: ');
     console.log(err);
   });
+  if(AWS_STATUS !== AWS_STATUS_STOPPED){
+    return client.end('Already starting Server! Wait a few seconds!');
+  }
+
   instanceStart(() => {
     client.end('Starting Server! Wait a few seconds!');
   });
