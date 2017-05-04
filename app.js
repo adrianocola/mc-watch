@@ -32,7 +32,9 @@ const minecraftStatus = (cb) => {
   }).then((state) => {
     cb(null, state);
   }).catch((error) => {
-    cb(error);
+    console.log('Minecraft Ping Error');
+    console.log(error);
+    cb(null);
   });
 };
 
@@ -53,7 +55,7 @@ const mcServer = mc.createServer({
     cb(null, response);
   }
 });
-mcServer.on('ping', function(client) {
+mcServer.on('started', function(client) {
   console.log('PING');
 });
 mcServer.on('login', function(client) {
@@ -69,6 +71,7 @@ mcServer.on('login', function(client) {
     client.end('Starting Server! Wait a few seconds!');
   });
 });
+console.log('Started MC Server listener on port 25565');
 
 /*******************
  *  AWS
@@ -220,6 +223,10 @@ router.get('/', (req, res, next) => {
     instanceStatus,
     minecraftStatus,
   ], (err, results) => {
+    if(err) {
+      console.log(err);
+      return next(err);
+    }
     res.render('index', {awsStatus: results[0], mcStatus: results[1], count: Math.floor(MC_EMPTY_COUNT/6)});
   })
 });
