@@ -67,7 +67,7 @@ const mcServer = mc.createServer({
     cb(null, response);
   }
 });
-mcServer.on('login', function(client) {
+mcServer.on('login', function(client, msg) {
   client.on('error', (err) => {
     console.log('MC client error: ');
     console.log(err);
@@ -77,7 +77,7 @@ mcServer.on('login', function(client) {
   }
 
   instanceStart(() => {
-    notify('Asked to start server via Minecraft');
+    notify('Asked to start server via Minecraft. User: ' + client.username);
     client.end(`Starting Server! Wait a few seconds! (±${startDurationAvg}s)`);
   });
 });
