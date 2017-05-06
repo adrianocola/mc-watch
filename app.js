@@ -73,11 +73,12 @@ mcServer.on('login', function(client) {
     console.log(err);
   });
   if(AWS_STATUS !== AWS_STATUS_STOPPED){
-    return client.end(`Already starting Server! Wait a few seconds! (~${startDurationAvg}s)`);
+    return client.end(`Already starting Server! Wait a few seconds! (±${startDurationAvg}s)`);
   }
 
   instanceStart(() => {
-    client.end(`Starting Server! Wait a few seconds! (~${startDurationAvg}s)`);
+    notify('Asked to start server via Minecraft');
+    client.end(`Starting Server! Wait a few seconds! (±${startDurationAvg}s)`);
   });
 });
 console.log('Started MC Server listener on port 25565');
