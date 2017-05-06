@@ -6,6 +6,8 @@ const logger = require('morgan');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const async = require('async');
+const moment = require('moment');
+const request = require('request');
 
 const config = require('./config.json');
 
@@ -16,8 +18,17 @@ const AWS_STATUS_TERMINATED = 'terminated';
 const AWS_STATUS_STOPPING = 'stopping';
 const AWS_STATUS_STOPPED = 'stopped';
 
+const MC_STATUS_STOPPED = 'MC_STATUS_STOPPED';
+const MC_STATUS_STARTED = 'MC_STATUS_STARTED';
+
 let AWS_STATUS = AWS_STATUS_STOPPED;
+let MC_STATUS = MC_STATUS_STOPPED;
 let MC_EMPTY_COUNT = 0;
+
+let startDate;
+let stopDate;
+let askedToStartDate;
+let startDurationAvg = 120;
 
 
 /*******************
@@ -48,15 +59,13 @@ const mcServer = mc.createServer({
   beforePing: (response, client, cb) => {
     response.players.max = 0;
     if(AWS_STATUS !== AWS_STATUS_STOPPED){
-      response.description.text = '§6STARTING§7 - Starting Server!';
+      const perc = Math.floor(100 * (moment().diff(askedToStartDate, 'seconds')/startDurationAvg));
+      response.description.text = `§6STARTING§7 - Starting Server! §f${perc > 100 ? 100: perc}%`;
     }else{
       response.description.text = '§4OFFLINE§7 - Enter to start server!';
     }
     cb(null, response);
   }
-});
-mcServer.on('started', function(client) {
-  console.log('PING');
 });
 mcServer.on('login', function(client) {
   client.on('error', (err) => {
@@ -64,11 +73,11 @@ mcServer.on('login', function(client) {
     console.log(err);
   });
   if(AWS_STATUS !== AWS_STATUS_STOPPED){
-    return client.end('Already starting Server! Wait a few seconds!');
+    return client.end(`Already starting Server! Wait a few seconds! (~${startDurationAvg}s)`);
   }
 
   instanceStart(() => {
-    client.end('Starting Server! Wait a few seconds!');
+    client.end(`Starting Server! Wait a few seconds! (~${startDurationAvg}s)`);
   });
 });
 console.log('Started MC Server listener on port 25565');
@@ -110,6 +119,7 @@ const instanceStop = (cb) => {
 const instanceStart = (cb) => {
   ec2.startInstances({InstanceIds: [config.AWS_INSTANCE_ID]}, function(err, data) {
     if (err) return cb(err); // an error occurred
+    askedToStartDate = moment();
     checkInstanceStatus();
     cb(null, data);           // successful response
   });
@@ -135,44 +145,22 @@ const updateZone = (ip, cb) => {
 const checkInstanceStatus = () => {
   instanceIp(() => {});
   instanceStatus((err, data) => {
-    if(err) return console.log(err);
-    const newStatus = data.Name;
-    if(newStatus !== AWS_STATUS){
-      console.log('Instance changed to: ' + newStatus);
-
-      if(AWS_STATUS !== AWS_STATUS_RUNNING && newStatus === AWS_STATUS_RUNNING){
-        //changed to running, must update DNS
-        console.log('Instance is now running, must update DNS IP');
-
-        instanceIp((err, ip) => {
-          if(err || !ip) return console.log(err || 'Instance don\'t have IP');
-          console.log('Instance IP is: ' + ip);
-          updateZone(ip, (err, resp) => {
-            if(err) return console.log(err);
-            console.log('Updated DNS to IP: ' + ip);
-          });
-        });
-      }else if(AWS_STATUS !== AWS_STATUS_STOPPED && newStatus === AWS_STATUS_STOPPED){
-        //changed to stopped, must update DNS IP back to mc-watch
-        console.log('Instance is now stopped, must update DNS IP');
-
-        updateZone(config.MC_WATCH_SERVER_IP, (err, resp) => {
-          if(err) return console.log(err);
-          console.log('Updated DNS to MC-WATCH IP');
-        });
-      }
-
-
-      AWS_STATUS = newStatus;
-    }
-  })
+    if (err) return console.log(err);
+    setAWSStatus(data.Name);
+  });
 };
 
 // check if MC is empty
 const checkMinecraftStatus = () => {
   if(AWS_STATUS === AWS_STATUS_RUNNING){
     minecraftStatus((err, mcStatus) => {
-      if(err || !mcStatus || mcStatus.players.length){
+      if(err || !mcStatus){
+        MC_EMPTY_COUNT = 0;
+        return;
+      }
+
+      setMCStatus(MC_STATUS_STARTED);
+      if(mcStatus.players.length){
         if(MC_EMPTY_COUNT){
           console.log('Server is not empty anymore!');
         }
@@ -199,6 +187,70 @@ const checkMinecraftStatus = () => {
 setInterval(checkMinecraftStatus, 10 * 1000);
 setInterval(checkInstanceStatus, 20 * 1000);
 checkInstanceStatus();
+
+/*******************
+ *  FLOW
+ *******************/
+
+const setAWSStatus = (newStatus) => {
+  if(newStatus !== AWS_STATUS) {
+    console.log('Instance changed to: ' + newStatus);
+
+    if (AWS_STATUS !== AWS_STATUS_RUNNING && newStatus === AWS_STATUS_RUNNING) {
+      //changed to running, must update DNS
+      console.log('Instance is now running, must update DNS IP');
+
+      instanceIp((err, ip) => {
+        if (err || !ip) return console.log(err || 'Instance don\'t have IP');
+        console.log('Instance IP is: ' + ip);
+        updateZone(ip, (err, resp) => {
+          if (err) return console.log(err);
+          console.log('Updated DNS to IP: ' + ip);
+        });
+      });
+    } else if (AWS_STATUS !== AWS_STATUS_STOPPED && newStatus === AWS_STATUS_STOPPED) {
+      setMCStatus(MC_STATUS_STOPPED);
+      //changed to stopped, must update DNS IP back to mc-watch
+      console.log('Instance is now stopped, must update DNS IP');
+
+      updateZone(config.MC_WATCH_SERVER_IP, (err, resp) => {
+        if (err) return console.log(err);
+        console.log('Updated DNS to MC-WATCH IP');
+      });
+    }
+  }
+
+  AWS_STATUS = newStatus;
+};
+
+const setMCStatus = (newStatus) => {
+
+  if(newStatus !== MC_STATUS) {
+    console.log('Minecraft changed to: ' + newStatus);
+
+    if (MC_STATUS !== MC_STATUS_STARTED && newStatus === MC_STATUS_STARTED) {
+      startDate = moment();
+      const startDuration = moment().diff(askedToStartDate, 'seconds');
+      startDurationAvg = Math.floor((startDurationAvg + startDuration)/2);
+      notify(`MC server started (in ${startDuration} seconds)`);
+    } else if (MC_STATUS !== MC_STATUS_STOPPED && newStatus === MC_STATUS_STOPPED) {
+      stopDate = moment();
+      const runDuration = stopDate.diff(startDate, 'minutes');
+      notify(`MC server stop (was online for ${runDuration} minutes)`);
+    }
+  }
+
+  MC_STATUS = newStatus;
+};
+
+/*******************
+ *  NOTIFY
+ *******************/
+
+const notify = (msg) => {
+  console.log(msg);
+  request.post('https://pushmeapi.jagcesar.se').form({token: config.PUSH_ME_TOKEN, title: msg})  ;
+};
 
 /*******************
  *  APP
