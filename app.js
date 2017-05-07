@@ -77,7 +77,7 @@ mcServer.on('login', function(client, msg) {
   }
 
   instanceStart(() => {
-    notify('Asked to start server via Minecraft. User: ' + client.username);
+    notifyAll('Asked to start server via Minecraft. User: ' + client.username);
     client.end(`Starting Server! Wait a few seconds! (±${startDurationAvg}s)`);
   });
 });
@@ -251,6 +251,11 @@ const setMCStatus = (newStatus) => {
 const notify = (msg) => {
   console.log(msg);
   request.post('https://pushmeapi.jagcesar.se').form({token: config.PUSH_ME_TOKEN, title: msg})  ;
+};
+
+const notifyAll = (msg) => {
+  notify(msg);
+  request.post('https://www.notifymyandroid.com/publicapi/notify').form({apikey: config.NMA_APIKEY, application: 'mc-watch', event: 'mc.adrianocola.com', description: msg});
 };
 
 /*******************
