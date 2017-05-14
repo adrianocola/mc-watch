@@ -237,7 +237,7 @@ const setMCStatus = (newStatus) => {
     } else if (MC_STATUS !== MC_STATUS_STOPPED && newStatus === MC_STATUS_STOPPED) {
       stopDate = moment();
       const runDuration = stopDate.diff(startDate, 'minutes');
-      notify(`MC server stop (was online for ${runDuration} minutes)`);
+      notifyAll(`MC server stop (was online for ${runDuration} minutes)`);
     }
   }
 
@@ -250,12 +250,14 @@ const setMCStatus = (newStatus) => {
 
 const notify = (msg) => {
   console.log(msg);
-  request.post('https://pushmeapi.jagcesar.se').form({token: config.PUSH_ME_TOKEN, title: msg})  ;
+  config.PUSH_ME_TOKEN.forEach((token) => {
+    request.post('https://pushmeapi.jagcesar.se').form({token, title: msg})  ;
+  });
 };
 
 const notifyAll = (msg) => {
   notify(msg);
-  request.post('https://www.notifymyandroid.com/publicapi/notify').form({apikey: config.NMA_APIKEY, application: 'mc-watch', event: 'mc.adrianocola.com', description: msg});
+  request.post('https://www.notifymyandroid.com/publicapi/notify').form({apikey: config.NMA_APIKEY.join(','), application: 'mc-watch', event: 'mc.adrianocola.com', description: msg});
 };
 
 /*******************
