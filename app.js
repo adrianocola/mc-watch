@@ -163,30 +163,30 @@ const checkMinecraftStatus = () => {
         return;
       }
 
+      const statusPlayers = _.map(mcStatus.players, 'name');
+
+      const joined = _.difference(statusPlayers, currentPlayers);
+      const left = _.difference(currentPlayers, statusPlayers);
+      const playersInfo = '. Jogadores online: ' + statusPlayers.join(', ');
+      const joinedText = joined.length > 1 ? 'Jogadores entraram: ' : 'Jogador entrou: ';
+      const leftText = left.length > 1 ? 'Jogadores pipocaram: ' : 'Jogador pipocou: ';
+
+      if(joined.length && left.length){
+        notify(joinedText + '. ' + leftText + left.join(', ') + joined.join(', ') + playersInfo, false, statusPlayers);
+      }else if(joined.length){
+        notify(joinedText + joined.join(', ') + playersInfo, false, statusPlayers);
+      }else if(left.length){
+        notify(leftText + left.join(', ') + playersInfo, false, statusPlayers);
+      }
+
+      currentPlayers = statusPlayers;
+
       setMCStatus(MC_STATUS_STARTED);
-      if(mcStatus.players.length){
+      if(statusPlayers.length){
         if(MC_EMPTY_COUNT){
           console.log('Server is not empty anymore!');
         }
         MC_EMPTY_COUNT = 0;
-
-        const statusPlayers = _.map(mcStatus.players, 'name');
-
-        const joined = _.difference(statusPlayers, currentPlayers);
-        const left = _.difference(currentPlayers, statusPlayers);
-        const playersInfo = '. Jogadores online: ' + statusPlayers.join(', ');
-        const joinedText = joined.length > 1 ? 'Jogadores entraram: ' : 'Jogador entrou: ';
-        const leftText = left.length > 1 ? 'Jogadores pipocaram: ' : 'Jogador pipocou: ';
-
-        if(joined.length && left.length){
-          notify(joinedText + '. ' + leftText + left.join(', ') + joined.join(', ') + playersInfo, false, statusPlayers);
-        }else if(joined.length){
-          notify(joinedText + joined.join(', ') + playersInfo, false, statusPlayers);
-        }else if(left.length){
-          notify(leftText + left.join(', ') + playersInfo, false, statusPlayers);
-        }
-
-        currentPlayers = statusPlayers;
 
         return;
       }
