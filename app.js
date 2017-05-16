@@ -1,3 +1,4 @@
+const _ = require('lodash');
 const express = require('express');
 const router = express.Router();
 const path = require('path');
@@ -29,6 +30,7 @@ let startDate;
 let stopDate;
 let askedToStartDate;
 let startDurationAvg = 120;
+let currentPlayers = [];
 
 
 /*******************
@@ -77,7 +79,7 @@ mcServer.on('login', function(client, msg) {
   }
 
   instanceStart(() => {
-    notifyAll('Asked to start server via Minecraft. User: ' + client.username);
+    notify('Asked to start server via Minecraft. User: ' + client.username, true);
     client.end(`Starting Server! Wait a few seconds! (±${startDurationAvg}s)`);
   });
 });
@@ -156,6 +158,7 @@ const checkMinecraftStatus = () => {
   if(AWS_STATUS === AWS_STATUS_RUNNING){
     minecraftStatus((err, mcStatus) => {
       if(err || !mcStatus){
+        currentPlayers = [];
         MC_EMPTY_COUNT = 0;
         return;
       }
@@ -166,10 +169,28 @@ const checkMinecraftStatus = () => {
           console.log('Server is not empty anymore!');
         }
         MC_EMPTY_COUNT = 0;
+
+        const joined = _.difference(mcStatus.players, currentPlayers);
+        const left = _.difference(currentPlayers, mcStatus.players);
+        const playersInfo = '. Jogadores online: ' + mcStatus.players.join(', ');
+        const joinedText = joined.length > 1 ? 'Jogadores entraram: ' : 'Jogador entrou: ';
+        const leftText = left.length > 1 ? 'Jogadores pipocaram: ' : 'Jogador pipocou: ';
+
+        if(joined.length && left.length){
+          notify(joinedText + '. ' + leftText + left.join(', ') + joined.join(', ') + playersInfo, false, mcStatus.players);
+        }else if(joined.length){
+          notify(joinedText + joined.join(', ') + playersInfo, false, mcStatus.players);
+        }else if(left.length){
+          notify(leftText + left.join(', ') + playersInfo, false, mcStatus.players);
+        }
+
+        currentPlayers = mcStatus.players;
+
         return;
       }
 
       if(!MC_EMPTY_COUNT){
+        currentPlayers = [];
         console.log('Server is empty!');
       }
 
@@ -233,11 +254,11 @@ const setMCStatus = (newStatus) => {
       startDate = moment();
       const startDuration = moment().diff(askedToStartDate, 'seconds');
       startDurationAvg = (Math.floor((startDurationAvg + startDuration)/2) || 90) + 30;
-      notify(`MC server started (in ${startDuration} seconds)`);
+      notify(`MC server started (in ${startDuration} seconds)`, true);
     } else if (MC_STATUS !== MC_STATUS_STOPPED && newStatus === MC_STATUS_STOPPED) {
       stopDate = moment();
       const runDuration = stopDate.diff(startDate, 'minutes');
-      notifyAll(`MC server stop (was online for ${runDuration} minutes)`);
+      notify(`MC server stop (was online for ${runDuration} minutes)`, true);
     }
   }
 
@@ -248,16 +269,18 @@ const setMCStatus = (newStatus) => {
  *  NOTIFY
  *******************/
 
-const notify = (msg) => {
+const notify = (msg, adminOnly, exclude) => {
   console.log(msg);
-  config.PUSH_ME_TOKEN.forEach((token) => {
-    request.post('https://pushmeapi.jagcesar.se').form({token, title: msg})  ;
-  });
-};
+  config.NOTIFICATIONS.forEach((notif) => {
+    if(adminOnly && !notif.admin) return;
+    if(!_.isEmpty(exclude) && _.includes(exclude, notif.player)) return;
 
-const notifyAll = (msg) => {
-  notify(msg);
-  request.post('https://www.notifymyandroid.com/publicapi/notify').form({apikey: config.NMA_APIKEY.join(','), application: 'mc-watch', event: 'mc.adrianocola.com', description: msg});
+    if(notif.type === 'PUSH_ME'){
+      request.post('https://pushmeapi.jagcesar.se').form({token: notif.token, title: msg});
+    }else if(notif.type === 'NMA'){
+      request.post('https://www.notifymyandroid.com/publicapi/notify').form({apikey: notif.token, application: 'mc-watch', event: 'mc.adrianocola.com', description: msg});
+    }
+  });
 };
 
 /*******************
