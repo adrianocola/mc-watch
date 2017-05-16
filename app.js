@@ -164,6 +164,7 @@ const checkMinecraftStatus = () => {
       }
 
       const statusPlayers = _.map(mcStatus.players, 'name');
+      const allPlayers = _.union(currentPlayers, statusPlayers);
 
       const joined = _.difference(statusPlayers, currentPlayers);
       const left = _.difference(currentPlayers, statusPlayers);
@@ -172,11 +173,11 @@ const checkMinecraftStatus = () => {
       const leftText = left.length > 1 ? 'Jogadores pipocaram: ' : 'Jogador pipocou: ';
 
       if(joined.length && left.length){
-        notify(joinedText + '. ' + leftText + left.join(', ') + joined.join(', ') + playersInfo, false, statusPlayers);
+        notify(joinedText + '. ' + leftText + left.join(', ') + joined.join(', ') + playersInfo, false, allPlayers);
       }else if(joined.length){
-        notify(joinedText + joined.join(', ') + playersInfo, false, statusPlayers);
+        notify(joinedText + joined.join(', ') + playersInfo, false, allPlayers);
       }else if(left.length){
-        notify(leftText + left.join(', ') + playersInfo, false, statusPlayers);
+        notify(leftText + left.join(', ') + playersInfo, false, allPlayers);
       }
 
       currentPlayers = statusPlayers;
