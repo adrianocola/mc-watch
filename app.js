@@ -167,7 +167,7 @@ const checkMinecraftStatus = () => {
 
       const joined = _.difference(statusPlayers, currentPlayers);
       const left = _.difference(currentPlayers, statusPlayers);
-      const playersInfo = '. Jogadores online: ' + statusPlayers.join(', ');
+      const playersInfo = '. Jogadores online: ' + ( statusPlayers.length ? statusPlayers.join(', ') : 'ninguém =(');
       const joinedText = joined.length > 1 ? 'Jogadores entraram: ' : 'Jogador entrou: ';
       const leftText = left.length > 1 ? 'Jogadores pipocaram: ' : 'Jogador pipocou: ';
 
