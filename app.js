@@ -31,6 +31,7 @@ let stopDate;
 let askedToStartDate;
 let startDurationAvg = 120;
 let currentPlayers = [];
+let leftPlayers = {};
 
 
 /*******************
@@ -169,16 +170,30 @@ const checkMinecraftStatus = () => {
       const joined = _.difference(statusPlayers, currentPlayers);
       const left = _.difference(currentPlayers, statusPlayers);
       const playersInfo = '. Jogadores online: ' + ( statusPlayers.length ? statusPlayers.join(', ') : 'ninguém =(');
-      const joinedText = joined.length > 1 ? 'Jogadores entraram: ' : 'Jogador entrou: ';
-      const leftText = left.length > 1 ? 'Jogadores pipocaram: ' : 'Jogador pipocou: ';
 
-      if(joined.length && left.length){
-        notify(joinedText + '. ' + leftText + left.join(', ') + joined.join(', ') + playersInfo, false, allPlayers);
-      }else if(joined.length){
-        notify(joinedText + joined.join(', ') + playersInfo, false, allPlayers);
-      }else if(left.length){
-        notify(leftText + left.join(', ') + playersInfo, false, allPlayers);
-      }
+      _.each(joined, (player) => {
+        // only notify if player didn't left recently
+        if(leftPlayers[player]){
+          clearTimeout(leftPlayers[player]);
+          delete leftPlayers[player];
+          return;
+        }
+        notify('Jogador entrou: ' + player + playersInfo, false, allPlayers);
+      });
+
+      _.each(left, (player) => {
+        // clear previous schedules left (if have one)
+        if(leftPlayers[player]){
+          clearTimeout(leftPlayers[player]);
+          delete leftPlayers[player];
+        }
+        // schedule to notify that a player left only after some time
+        // (to prevent notifications of disconnects followed by a fast reconnect)
+        leftPlayers[player] = setTimeout(() => {
+          notify('Jogador pipocou: ' + player + playersInfo, false, allPlayers);
+          delete leftPlayers[player];
+        }, 60*1000);
+      });
 
       currentPlayers = statusPlayers;
 
