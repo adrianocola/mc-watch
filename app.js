@@ -29,7 +29,7 @@ let MC_EMPTY_COUNT = 0;
 let startDate;
 let stopDate;
 let askedToStartDate;
-let startDurationAvg = 120;
+let startDurationAvg = 90;
 let currentPlayers = [];
 let leftPlayers = {};
 
@@ -292,6 +292,7 @@ const notify = (msg, adminOnly, exclude) => {
   config.NOTIFICATIONS.forEach((notif) => {
     if(adminOnly && !notif.admin) return;
     if(!_.isEmpty(exclude) && _.includes(exclude, notif.player)) return;
+    console.log('Notifying player ' + notif.player);
 
     if(notif.type === 'PUSH_ME'){
       request.post('https://pushmeapi.jagcesar.se').form({token: notif.token, title: msg});
