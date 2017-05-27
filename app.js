@@ -97,9 +97,11 @@ const getPlayersStatus = (cb) => {
   request('http://' + config.MC_SERVER_ADDRESS + ':' + config.MC_STATS_PORT, (err, response, body) => {
     if(err) return cb(err);
 
-    db.set('posts', body).write();
+    const stats = JSON.parse(body);
 
-    cb(null, body);
+    db.set('stats', stats).write();
+
+    cb(null, stats);
   });
 };
 
