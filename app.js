@@ -9,6 +9,8 @@ const bodyParser = require('body-parser');
 const async = require('async');
 const moment = require('moment');
 const request = require('request');
+const db = low('db.json');
+db.defaults({ stats: [], startDurationAvg: 90 }).write();
 
 const config = require('./config.json');
 
@@ -85,6 +87,17 @@ mcServer.on('login', function(client, msg) {
   });
 });
 console.log('Started MC Server listener on port 25565');
+
+/*******************
+ *  STATUS
+ *******************/
+
+const getPlayersStatus = (cb) => {
+  request('http://' + config.MC_SERVER_ADDRESS + ':' + config.MC_STATS_PORT, (error, response, body) => {
+    if(err) return cb(err);
+    console.log(body);
+  });
+};
 
 /*******************
  *  AWS
@@ -324,11 +337,13 @@ router.get('/', (req, res, next) => {
   async.parallel([
     instanceStatus,
     minecraftStatus,
+    getPlayersStatus,
   ], (err, results) => {
     if(err) {
       console.log(err);
       return next(err);
     }
+    console.log(results[2]);
     res.render('index', {awsStatus: results[0], mcStatus: results[1], count: Math.floor(MC_EMPTY_COUNT/6)});
   })
 });
