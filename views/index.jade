@@ -7,5 +7,5 @@ block content
     form(action="/", method="post")
       input(type="submit" value="Start")
   p Minecraft: #{mcStatus ? 'online (' + mcStatus.players.length + '/' + mcStatus.maxplayers + '): ' + mcStatus.players.map((p) => p.name).join(', ') + ( count ? ' and empty for ' + count + ' minutes' : '' ) : 'offline'}
-  p #{_.map(playersStatus, (s) => s.player + ': ' + humanizeDuration(s.stats['stat.playOneMinute']*60*1000))}
+  p #{_.map(playersStatus, (s) => s.player + ': ' + humanizeDuration(s.stats['stat.playOneMinute']*60))}
 
