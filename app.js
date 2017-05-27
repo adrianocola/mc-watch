@@ -94,7 +94,7 @@ console.log('Started MC Server listener on port 25565');
  *******************/
 
 const getPlayersStatus = (cb) => {
-  request('http://' + config.MC_SERVER_ADDRESS + ':' + config.MC_STATS_PORT, (error, response, body) => {
+  request('http://' + config.MC_SERVER_ADDRESS + ':' + config.MC_STATS_PORT, (err, response, body) => {
     if(err) return cb(err);
     console.log(body);
   });
