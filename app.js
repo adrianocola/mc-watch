@@ -96,11 +96,11 @@ console.log('Started MC Server listener on port 25565');
 const getPlayersStatus = (cb) => {
 
   if(MC_STATUS !== MC_STATUS_STARTED){
-    return cb(null, db.get('stats'));
+    return cb(null, db.get('stats').value());
   }
 
   request('http://' + config.MC_SERVER_ADDRESS + ':' + config.MC_STATS_PORT, (err, response, body) => {
-    if(err) return cb(null, db.get('stats'));
+    if(err) return cb(null, db.get('stats').value());
 
     const stats = JSON.parse(body);
 
