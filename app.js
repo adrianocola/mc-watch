@@ -96,7 +96,7 @@ console.log('Started MC Server listener on port 25565');
 const getPlayersStatus = (cb) => {
   request('http://' + config.MC_SERVER_ADDRESS + ':' + config.MC_STATS_PORT, (err, response, body) => {
     if(err) return cb(err);
-    console.log(body);
+    cb(null, body);
   });
 };
 
@@ -345,7 +345,7 @@ router.get('/', (req, res, next) => {
       return next(err);
     }
     console.log(results[2]);
-    res.render('index', {awsStatus: results[0], mcStatus: results[1], count: Math.floor(MC_EMPTY_COUNT/6)});
+    res.render('index', {awsStatus: results[0], mcStatus: results[1], playersStatus: results[2], count: Math.floor(MC_EMPTY_COUNT/6)});
   })
 });
 router.post('/', (req, res, next) => {
