@@ -4,5 +4,26 @@ html
     title= title
     link(rel='stylesheet', href='/stylesheets/style.css')
     link(rel="shortcut icon", href="/favicon.png")
+    style(type="text/css").
+      table {
+        font-family: arial, sans-serif;
+        border-collapse: collapse;
+        width: 100%;
+      }
+
+      th{
+        color: white;
+        background-color: #666666;
+      }
+
+      td, th {
+        border: 1px solid #dddddd;
+        text-align: left;
+        padding: 8px;
+      }
+
+      tr:nth-child(even) {
+        background-color: #dddddd;
+      }
   body
     block content

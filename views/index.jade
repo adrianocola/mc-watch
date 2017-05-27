@@ -7,16 +7,18 @@ block content
     form(action="/", method="post")
       input(type="submit" value="Start")
   p Minecraft: #{mcStatus ? 'online (' + mcStatus.players.length + '/' + mcStatus.maxplayers + '): ' + mcStatus.players.map((p) => p.name).join(', ') + ( count ? ' and empty for ' + count + ' minutes' : '' ) : 'offline'}
-  <h5>Players Stats</h5>
-  <table>
-    <tr>
-      <th>Name</th>
-      <th>Play Time</th>
-    </tr>
+  h3 Players Stats
+  table
+    tr
+      th Name
+      th Playing Time
+      th Server Joins
+      th Deaths
+      th Mob Kills
     each ps in playersStatus
-      <tr>
-        <td>#{ps.player}</td>
-        <td>#{humanizeDuration(ps.stats['stat.playOneMinute']*60, { units: ['d', 'h', 'm'], round: true, language: 'pt' })}</td>
-      </tr>
-  </table>
-
+      tr
+        td #{ps.player}
+        td #{humanizeDuration(ps.stats['stat.playOneMinute']*60, { units: ['d', 'h', 'm'], round: true })}
+        td #{ps.stats['stat.leaveGame'] || 0}
+        td #{ps.stats['stat.deaths'] || 0}
+        td #{ps.stats['stat.mobKills'] || 0}
