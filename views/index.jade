@@ -7,5 +7,16 @@ block content
     form(action="/", method="post")
       input(type="submit" value="Start")
   p Minecraft: #{mcStatus ? 'online (' + mcStatus.players.length + '/' + mcStatus.maxplayers + '): ' + mcStatus.players.map((p) => p.name).join(', ') + ( count ? ' and empty for ' + count + ' minutes' : '' ) : 'offline'}
-  p #{_.map(playersStatus, (s) => s.player + ': ' + humanizeDuration(s.stats['stat.playOneMinute']*60, { units: ['d', 'h', 'm'], round: true, language: 'pt' })).join('<br>')}
+  <h5>Players Stats</h5>
+  <table>
+    <tr>
+      <th>Name</th>
+      <th>Play Time</th>
+    </tr>
+    each ps in playersStatus
+      <tr>
+        <td>#{ps.player}</td>
+        <td>#{humanizeDuration(ps.stats['stat.playOneMinute']*60, { units: ['d', 'h', 'm'], round: true, language: 'pt' })}</td>
+      </tr>
+  </table>
 
