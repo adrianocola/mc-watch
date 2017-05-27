@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const path = require('path');
 const favicon = require('serve-favicon');
+const humanizeDuration = require('humanize-duration');
 const logger = require('morgan');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
@@ -354,7 +355,7 @@ router.get('/', (req, res, next) => {
       console.log(err);
       return next(err);
     }
-    res.render('index', {_: _, awsStatus: results[0], mcStatus: results[1], playersStatus: results[2], count: Math.floor(MC_EMPTY_COUNT/6)});
+    res.render('index', {_, humanizeDuration, awsStatus: results[0], mcStatus: results[1], playersStatus: results[2], count: Math.floor(MC_EMPTY_COUNT/6)});
   })
 });
 router.post('/', (req, res, next) => {
