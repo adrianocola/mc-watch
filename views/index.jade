@@ -14,11 +14,15 @@ block content
       th Playing Time
       th Server Joins
       th Deaths
+      th Player Kills
       th Mob Kills
+      th Walked (km)
     each ps in playersStatus
       tr
         td #{ps.player}
         td #{humanizeDuration(ps.stats['stat.playOneMinute']*60, { units: ['d', 'h', 'm'], round: true })}
         td #{ps.stats['stat.leaveGame'] || 0}
         td #{ps.stats['stat.deaths'] || 0}
+        td #{ps.stats['stat.playerKills'] || 0}
         td #{ps.stats['stat.mobKills'] || 0}
+        td #{_.round(ps.stats['stat.walkOneCm'] / 100 / 1000, 1)}
