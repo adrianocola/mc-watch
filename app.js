@@ -33,7 +33,6 @@ let MC_EMPTY_COUNT = 0;
 let startDate;
 let stopDate;
 let askedToStartDate;
-let startDurationAvg = 90;
 let currentPlayers = [];
 let leftPlayers = {};
 
@@ -66,7 +65,7 @@ const mcServer = mc.createServer({
   beforePing: (response, client, cb) => {
     response.players.max = 0;
     if(AWS_STATUS !== AWS_STATUS_STOPPED){
-      const perc = Math.floor(100 * (moment().diff(askedToStartDate, 'seconds')/startDurationAvg));
+      const perc = Math.floor(100 * (moment().diff(askedToStartDate, 'seconds')/db.get('startDurationAvg').value()));
       response.description.text = `§6STARTING§7 - Starting Server! §f${perc > 100 ? 100: perc}%`;
     }else{
       response.description.text = '§4OFFLINE§7 - Enter to start server!';
@@ -80,12 +79,12 @@ mcServer.on('login', function(client, msg) {
     console.log(err);
   });
   if(AWS_STATUS !== AWS_STATUS_STOPPED){
-    return client.end(`Already starting Server! Wait a few seconds! (±${startDurationAvg}s)`);
+    return client.end(`Already starting Server! Wait a few seconds! (±${db.get('startDurationAvg').value()}s)`);
   }
 
   instanceStart(() => {
     notify('Asked to start server via Minecraft. User: ' + client.username, true);
-    client.end(`Starting Server! Wait a few seconds! (±${startDurationAvg}s)`);
+    client.end(`Starting Server! Wait a few seconds! (±${db.get('startDurationAvg').value()}s)`);
   });
 });
 console.log('Started MC Server listener on port 25565');
@@ -149,6 +148,7 @@ const instanceStart = (cb) => {
   ec2.startInstances({InstanceIds: [config.AWS_INSTANCE_ID]}, function(err, data) {
     if (err) return cb(err); // an error occurred
     askedToStartDate = moment();
+    MC_EMPTY_COUNT = 0;
     checkInstanceStatus();
     cb(null, data);           // successful response
   });
@@ -296,7 +296,7 @@ const setMCStatus = (newStatus) => {
     if (MC_STATUS !== MC_STATUS_STARTED && newStatus === MC_STATUS_STARTED) {
       startDate = moment();
       const startDuration = moment().diff(askedToStartDate, 'seconds');
-      startDurationAvg = (Math.floor((startDurationAvg + startDuration)/2) || 90) + 30;
+      db.set('startDurationAvg', (Math.floor((db.get('startDurationAvg').value() + startDuration)/2) || 90) + 30).white();
       notify(`MC server started (in ${startDuration} seconds)`, true);
     } else if (MC_STATUS !== MC_STATUS_STOPPED && newStatus === MC_STATUS_STOPPED) {
       stopDate = moment();
