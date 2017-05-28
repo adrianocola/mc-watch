@@ -296,7 +296,7 @@ const setMCStatus = (newStatus) => {
     if (MC_STATUS !== MC_STATUS_STARTED && newStatus === MC_STATUS_STARTED) {
       startDate = moment();
       const startDuration = moment().diff(askedToStartDate, 'seconds');
-      db.set('startDurationAvg', (Math.floor((db.get('startDurationAvg').value() + startDuration)/2) || 90) + 30).white();
+      db.set('startDurationAvg', (Math.floor((db.get('startDurationAvg').value() + startDuration)/2) || 90) + 30).write();
       notify(`MC server started (in ${startDuration} seconds)`, true);
     } else if (MC_STATUS !== MC_STATUS_STOPPED && newStatus === MC_STATUS_STOPPED) {
       stopDate = moment();
