@@ -138,9 +138,11 @@ const instanceStatus = (cb) => {
 };
 
 const instanceStop = (cb) => {
-  ec2.stopInstances({InstanceIds: [config.AWS_INSTANCE_ID]}, function(err, data) {
-    if (err) return cb(err); // an error occurred
-    cb(null, data);           // successful response
+  getPlayersStatus(() => {
+    ec2.stopInstances({InstanceIds: [config.AWS_INSTANCE_ID]}, function(err, data) {
+      if (err) return cb(err); // an error occurred
+      cb(null, data);           // successful response
+    });
   });
 };
 
