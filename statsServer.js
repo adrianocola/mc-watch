@@ -7,8 +7,8 @@ const fs = require('fs');
 const nbt = require('prismarine-nbt');
 const async = require('async');
 
-const STATSDIR = '/home/ec2-user/world/stats';
-const PLAYERDIR = '/home/ec2-user/world/playerdata';
+const STATSDIR = '/home/ec2-user/server/world/stats';
+const PLAYERDIR = '/home/ec2-user/server/world/playerdata';
 
 const app = http.createServer(function(req,res){
   fs.readdir(STATSDIR, (err, files) => {
