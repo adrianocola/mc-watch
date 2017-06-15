@@ -61,7 +61,7 @@ const mcServer = mc.createServer({
   encryption: true,      // optional
   host: '0.0.0.0',       // optional
   port: 25565,           // optional
-  version: '1.12-pre4',
+  version: '1.12',
   beforePing: (response, client, cb) => {
     response.players.max = 0;
     if(AWS_STATUS !== AWS_STATUS_STOPPED){
