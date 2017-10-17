@@ -160,12 +160,30 @@ const instanceStart = (cb) => {
  *  DNS
  *******************/
 
-const dnsClient = require('dnsimple')({
-  accessToken: config.DNSIMPLE_TOKEN,
-});
+const route53 = new AWS.Route53();
 
 const updateZone = (ip, cb) => {
-  dnsClient.zones.updateZoneRecord(config.DNSIMPLE_ACCOUNT_ID, config.DNSIMPLE_ZONE_ID, config.DNSIMPLE_RECORD_ID, {content: ip}).then((data) => cb(null, data),cb);
+  route53.changeResourceRecordSets({
+    ChangeBatch: {
+      Changes: [
+        {
+          Action: "UPSERT",
+          ResourceRecordSet: {
+            Name: "mc.adrianocola.com.",
+            ResourceRecords: [
+              {
+                Value: ip
+              }
+            ],
+            TTL: 60,
+            Type: "A"
+          }
+        }
+      ],
+      Comment: "Minecraft Server"
+    },
+    HostedZoneId: config.AWS_HOSTED_ZONE_ID,
+  }, cb);
 };
 
 /*******************
